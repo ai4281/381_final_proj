@@ -7,6 +7,12 @@ app.controller('AppCtrl', ['$scope', '$mdSidenav', function($scope, $mdSidenav){
   };
 
 
+  // $scope.colorClicked = function() {
+  // 		setVariables($scope.color.red);
+
+  // 	}
+
+
 
 }]);
 
