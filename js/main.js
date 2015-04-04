@@ -1,5 +1,5 @@
 
-timbre.bpm = 300;
+timbre.bpm = 100;
 
 //various arrays for automata use
 var oneArray = [0, 0, 1, 0, 0, 0, 1, 1];
@@ -159,7 +159,7 @@ function setupIntervals()
 			loudness += twoArray[i];
 		}
 
-		if (loudness > x/100)
+		if (loudness > 8 - (x/100) )
 		{
 			loudness = 120;
 		}
@@ -174,7 +174,7 @@ function setupIntervals()
 		{
 		 	//synth.noteOn(pitchSetFunc(Math.floor(Math.random() * 12), pitchSet) + 38, Math.random() * 90);
 			//synth3.noteOn( Math.floor(Math.random() * 2) * 12 + 30 , loudness);
-			synth3.noteOn( twoArray[4] * 12 + 30 , loudness);
+			synth3.noteOn( twoArray[4] * 12 + 25 , loudness);
 
 		}
 	}).on("ended", function() {

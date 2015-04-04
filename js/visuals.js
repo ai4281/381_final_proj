@@ -34,6 +34,9 @@ var xSize = 4,
 	ySize = 4,
 	zSize = 4;
 
+//tempo change
+var oldTempo, newTempo;
+
 
 init();
 draw();
@@ -43,26 +46,25 @@ var cube;
 function init() {
 	container = document.getElementById( 'cont' );
 
-	sideBarWidth = document.getElementById('sideBar').offsetWidth;
+	oldTempo = timbre.bpm;
+	newTempo = oldTempo;
 
-	camera = new THREE.PerspectiveCamera(70, (width - sideBarWidth) / height, 1, 1000);
+	camera = new THREE.PerspectiveCamera(70, (width) / height, 1, 1000);
 	camera.position.set(0, 20, 50);
 
 	scene = new THREE.Scene();
 
 	renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor( 0xADEBEC );
-				renderer.setSize ( width - sideBarWidth, height );
-				renderer.domElement.style.cssFloat = "right";
+				renderer.setSize ( width, height );
+				renderer.domElement.style.cssFloat = "left";
 
 	container.appendChild(renderer.domElement);
 
 	window.addEventListener( 'resize', onWindowResize, false );
 
 
-	// directionalLight = new THREE.DirectionalLight( 0xdd33333, 0.3 );
-	// directionalLight.position.set( 0, 1, 0 );
-	//scene.add( directionalLight );
+	
 
 	initCubes(cubeArray1);
 	initCubes(cubeArray2);
@@ -70,13 +72,13 @@ function init() {
 	initGeometry();
 
 	//sand
-	initTerrain(0x855C33, 25, 300, 5, 0, 0);
+	initTerrain(0x855C33, 25, 300, 20, 0, 0);
 	//grass
 	initTerrain(0x2E9C53, 25, 10, 10, 0, 0);
 	//river
 	initTerrain(0x9BE6E6, 50, 150, 2, 0, 0);
 	//mountain
-	initTerrain(0x66FF66, 5, 1000, 110, -10, -580);
+	initTerrain(0x66FF66, 5, 1000, 200, -10, -580);
 
 
 	initSky();
@@ -85,19 +87,27 @@ function init() {
 
 	//add mouse
 	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-	document.addEventListener( 'touchmove', onDocumentTouchMove, false);
 	document.addEventListener( 'keydown', onKeyDown, false);
+	document.addEventListener( 'touchmove', onDocumentTouchMove, false);
+	document.addEventListener( 'touchend', onDocumentTouchEnd, false);
+
+	document.addEventListener( 'mousedown', onMouseDown, false);
+	document.addEventListener( 'mouseup', onMouseUp, false);
 }
 
 function initSky() {
 
 	var sunGeo = new THREE.SphereGeometry( 5, 32, 32 );
-	var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+	var material = new THREE.MeshBasicMaterial( {color: 0xffff00, shading: THREE.FlatShading} );
 	sunMesh = new THREE.Mesh( sunGeo, material );
 	sunMesh.scale.set(5, 5, 5);
 	sunMesh.position.y = 150;
 	sunMesh.position.z = -500;
 	scene.add( sunMesh );
+
+	directionalLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
+	directionalLight.position.set( 0, 150, 0 );
+	scene.add( directionalLight );
 }
 
 function initTerrain(color, detail, noiseDiv, height, yPos, zPos)
@@ -111,11 +121,12 @@ function initTerrain(color, detail, noiseDiv, height, yPos, zPos)
 	for (var i = 0; i < geometry.vertices.length; i++)
 	{
 		geometry.vertices[i].z = noise.simplex2(i, i / noiseDiv) * height;
+		//geometry.vertices[i].z = Math.random() * height;
 	}
 
-	//var material = new THREE.MeshPhongMaterial( { color: 0xdddddd, specular: 0x009900, shininess: 30, shading: THREE.FlatShading } );
+	var material = new THREE.MeshPhongMaterial( { color: color, specular: 0x009900, shininess: 0, shading: THREE.FlatShading } );
 
-	var material = new THREE.MeshBasicMaterial({color: color, opacity: 0.5, wireframe: false});
+	//var material = new THREE.MeshBasicMaterial({color: color, opacity: 0.5, wireframe: false});
 
 	var plane = new THREE.Mesh(geometry, material);
 	plane.rotation.x = Math.PI/2;
@@ -206,14 +217,54 @@ function onDocumentMouseMove( event ) {
 
 	mouseX = event.clientX - width/2;
 	mouseY = event.clientY - height/2;
+
+	newTempo = z;
 }
 
 function onDocumentTouchMove( event ) {
 
-	event.preventDefault();
+	//event.preventDefault();
 
 	mouseX = event.targetTouches[0].pageX;
 	mouseY = event.targetTouches[0].pageY;
+
+	if (event.targetTouches.length == 2)
+	{
+		cameraMoving = true;
+	}
+
+	newTempo = z;
+
+}
+
+function onDocumentTouchEnd(event) {
+	cameraMoving = false;
+
+	if (oldTempo != newTempo)
+	{
+		setBPM(newTempo);
+		oldTempo = timbre.bpm;
+	}
+
+}
+
+function onMouseDown(event) {
+	cameraMoving = true;
+	
+}
+
+function onMouseUp(event) {
+	cameraMoving = false;
+
+	newTempo = z;
+
+	if (oldTempo != newTempo)
+	{
+		setBPM(newTempo);
+		oldTempo = timbre.bpm;
+	}
+
+	console.log(timbre.bpm);
 
 }
 
@@ -298,6 +349,11 @@ function whatClicked(evt) {
 	{
 		swapGeo(cubeArray1[i]);
 	}
+
+	for (var i = 0; i < cubeArray2.length; i++)
+	{
+		swapGeo(cubeArray2[i]);
+	}
 	
 }
 
@@ -318,10 +374,6 @@ function resetRes(evt) {
 	renderer.setSize ( width - sideBarWidth, height );
 
 }
-
-
-sideNavReset.addEventListener("click", resetRes, false);
-
 
 
 function scaleCube(index, cube, musicArray) {
@@ -410,7 +462,12 @@ function render() {
 	if ( cameraMoving )
 	{
 		camera.position.x = mouseX / 10;
-		camera.position.y = mouseY / 20 + 20;
+		camera.position.y = mouseY / 10;
+	}
+
+	if (camera.position.y < 0)
+	{
+		camera.position.y = 0;	
 	}
 
 	//update fov
@@ -418,7 +475,7 @@ function render() {
 	camera.updateProjectionMatrix();
 	
 
-	var pos = new THREE.Vector3(scene.position.x, scene.position.y + 0, scene.position.z);
+	var pos = new THREE.Vector3(0, 150, -1000);
 
 	camera.lookAt( pos );
 
@@ -437,12 +494,10 @@ function onWindowResize() {
 	width = window.innerWidth,
 	height = window.innerHeight;
 
-	sideBarWidth = document.getElementById('sideBar').offsetWidth;
-
-	camera.aspect = (width - sideBarWidth) / height;
+	camera.aspect = (width) / height;
 	camera.updateProjectionMatrix();
 
-	renderer.setSize ( width - sideBarWidth, height );
+	renderer.setSize ( width, height );
 
 	console.log(sideBarWidth);
 }
