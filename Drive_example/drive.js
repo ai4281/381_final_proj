@@ -2,9 +2,11 @@
  * Print metadata for the Application Data folder.
  */
 function printApplicationDataFolderMetadata() {
-  var request = gapi.client.drive.files.get({
-    'fileId': 'appfolder'
-  });
+  var request = gapi.client.request({
+        'path': '/drive/v2/files',
+        'method': 'GET',
+        'params': {'maxResults': '1'}
+        });
   request.execute(function(resp) {
     console.log('Id: ' + resp.id);
     console.log('Title: ' + resp.title);
