@@ -1,15 +1,16 @@
-<div class = "mainPage">
+  <div layout="column" ng-controller="AppCtrl">
+
     <md-toolbar layout="row">
-      <button ng-click="toggleSidenav('left')" class="menuBtn">
+      <button ng-mousedown="toggleSidenav('left')" class="menuBtn">
         <span class="visually-hidden">Menu</span>
       </button>
-      <h1 class="md-toolbar-tools" layout-align-gt-sm="center">Musical Automaton</h1>
+      <h1 class="md-toolbar-tools" layout-align-gt-sm="center">BEEP BOOP ISLAND</h1>
     </md-toolbar>
     <div layout="row" flex>
         <md-sidenav layout="column" class="md-sidenav-left md-whiteframe-z2" md-component-id="left">
 
           <md-toolbar class="md-theme-light">
-             <button ng-click="toggleSidenav('left')" class="menuBtn">
+             <button ng-mousedown="toggleSidenav('left')" class="menuBtn">
               <span class="visually-hidden">Menu</span>
             </button>
           </md-toolbar>
@@ -20,40 +21,40 @@
           
             <div layout>
               <div flex="20" layout layout-align="center center">
-                <span>Bass(X)</span>
+                <span>Beep</span>
               </div>
 
-              <md-slider flex min="1" max="800" ng-model="color.red" aria-label="red" id="red-slider" class>
+              <md-slider flex min="1" max="800" ng-model="color.red" aria-label="red" id="red-slider" class ng-change="setBass()">
               </md-slider>
 
               <div flex="25" layout layout-align="center center">
-                <input type="number" ng-model="color.red" aria-label="red" aria-controls="red-slider" ng-init="color.red=50" id="xScale">
+                <input type="number" ng-model="color.red" aria-label="red" aria-controls="red-slider" id="xScale">
               </div>
             </div>
 
             <div layout>
               <div flex="20" layout layout-align="center center">
-                <span>Y</span>
+                <span>Boop</span>
               </div>
 
               <md-slider flex min="1" max="500" ng-model="color.green" aria-label="green" id="green-slider" class>
               </md-slider>
 
               <div flex="25" layout layout-align="center center">
-                <input type="number" ng-model="color.green" aria-label="green" aria-controls="green-slider" ng-init="color.green=100" id="yScale">
+                <input type="number" ng-model="color.green" aria-label="green" aria-controls="green-slider" id="yScale">
               </div>
             </div>
 
             <div layout>
               <div flex="20" layout layout-align="center center">
-                <span>Tempo(Z)</span>
+                <span>Tempo</span>
               </div>
 
-              <md-slider flex min="10" max="300" ng-model="color.blue" aria-label="blue" id="blue-slider" class>
+              <md-slider flex min="10" max="300" ng-model="color.blue" aria-label="blue" id="blue-slider" class ng-change="changeTempo()" >
               </md-slider>
 
               <div flex="25" layout layout-align="center center">
-                <input type="number" ng-model="color.blue" aria-label="blue" aria-controls="blue-slider" placeholder="1" ng-init="color.blue=100" id="zScale">
+                <input type="number" ng-model="color.blue" aria-label="blue" aria-controls="blue-slider" placeholder="1" id="zScale" ng-change="changeTempo()">
               </div>
             </div>
 
@@ -79,7 +80,7 @@
               </md-slider>
 
               <div flex="25" layout layout-align="center center">
-                <input type="number" ng-model="color.zAngle" aria-label="zAngle" aria-controls="zAngle-slider" placeholder="1" ng-init="color.zAngle=100" id="zAngle">
+                <input type="number" ng-model="color.zAngle" aria-label="zAngle" aria-controls="zAngle-slider" placeholder="1" id="zAngle">
               </div>
             </div>
 
@@ -94,22 +95,31 @@
               <md-button ng-click="selected=true">Select Shape</md-button>
             </div>
 
-            
+            <section layout="column" layout-align="center center" class="saveLoad">
+              <div id="save">
+                <md-button class="md-raised" ng-click="saveSettings()">Save Settings</md-button>
+              </div>
+              <div id="load">
+                <md-button class="md-raised md-primary" ng-click="loadSettings()">Load Settings</md-button>
+              </div>
+            </section>
+
+            <div id='downloadLink'></div>
 
           </div>
 
         </md-sidenav>
         <div layout="column" flex id="content">
-            <md-content layout="column" flex class="md-padding">
-            <div id="cont"></div>
+            <!-- <md-content layout="column" flex class="md-padding"> -->
+            <md-content>
+            <!-- <div id="cont"></div> -->
 <!--             <canvas id="myCanvas"></canvas>
             <div id='x'>{{color.red}}</div>
             <div id='y'>{{color.green}}</div>
             <div id='z'>{{color.blue}}</div>
-            {{someVal}} -->
-            
+            {{someVal}} --> 
             </md-content>
-
         </div>
+
     </div>
 </div>

@@ -1,4 +1,9 @@
+
 timbre.bpm = 100;
+
+//for sending to web audio API
+// var api = T("WebAudioAPI:send");
+// var context = api.context;
 
 //various arrays for automata use
 var oneArray = [0, 0, 1, 0, 0, 0, 1, 1];
@@ -8,23 +13,6 @@ var threeArray = [0, 0, 0, 0, 1, 0, 0, 0];
 var ruleset = [1, 0, 1, 0, 0, 0, 0, 1];
 
 var melodyPattern = [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0];
-var percussionPattern = [1, 0, 0, 0,
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0,
- 						 0, 0, 0, 0,
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0];
-
-var percussionPattern2 = [0, 0, 0, 0,
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0,
- 						 1, 0, 0, 0,
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0, 
- 						 0, 0, 0, 0];
 
 //determine which scale is used. 0 = major, 1 = minor, 2 = whole tone
 var pitchSet = 2;
@@ -33,18 +21,16 @@ var pitchSet = 2;
 var d = new Date();
 var n = d.getTime();
 
-var bassFreq = 1;
-
 //env
 var envChord = T("perc", {a:1, r:10});
 var envMel = T("perc", {a:1, r:50});
-var envBass = T("perc", {a:10, r:80});
+var envBass = T("perc", {a:1, r:100});
 
 //synth declaration
-var synth = T("OscGen", {wave:"tri", env: envChord, mul:0.8});
+var synth = T("OscGen", {wave:"tri", env: envChord, mul:0.3});
 var synth2 = T("OscGen", {wave:"tri", env: envMel, mul:1.0, cutoff:1000});
 
-var synth3 = T("OscGen", {wave:"tri", env:envBass, mul:0.5});
+var synth3 = T("OscGen", {wave:"tri", env:envBass, mul:0.6});
 
 //default on/off toggle states for different things
 var chordOn = true;
@@ -55,7 +41,7 @@ var animateOn = true;
 
 var chord, melody, bass;
 
-
+setupIntervals();
 
 function setBPM(number)
 {
@@ -67,9 +53,6 @@ function setBPM(number)
 
 function setupIntervals()
 {
-
-	nullIntervals();
-
 	//chord L2
 	chord = T("interval", {interval:"L8", delay:1000, timeout:"600sec"}, function() {
 
@@ -96,7 +79,8 @@ function setupIntervals()
 
 					if (chordOn)
 					{
-						synth.noteOn(150 + pitchSetFunc(i, pitchSet), velocity);		
+						synth.noteOn(150 + pitchSetFunc(i, pitchSet), velocity);
+
 					}
 				}
 			}
@@ -134,8 +118,6 @@ function setupIntervals()
 					if (melodyOn)
 					{
 						synth2.noteOn(74 + pitchSetFunc(i, pitchSet), 5 + Math.random() * 20);
-
-						// console.log("yo");
 						return;
 					}
 
@@ -163,8 +145,7 @@ function setupIntervals()
 			loudness += twoArray[i];
 		}
 
-		if (loudness > 8 - (bassFreq/100) )
-		//if (loudness > 1 )
+		if (loudness > 8 - (x/100) )
 		{
 			loudness = 120;
 		}
@@ -186,144 +167,62 @@ function setupIntervals()
 	    this.stop();
 	}).set({buddies:synth3}).start();
 
-	console.log("intervals set");
-
 }
 
 function nullIntervals()
 {
-	try {
-		chord.stop();
-		melody.stop();
-		bass.stop();
+	chord.stop();
+	melody.stop();
+	bass.stop();
 
-		chord = null;
-		melody = null;
-		bass = null;
-	}
+	chord = null;
+	melody = null;
+	bass = null;
 
-	catch(err)
-	{
-		console.log("nothing to nullify");
-	}
 }
 
-// //chord L2
-// var chord = T("interval", {interval:"L8", delay:1000, timeout:"600sec"}, function() {
+//send timbre to webaudio API
+// api.append(synth).send(context.destination);
+// api.append(synth2).send(context.destination);
+// api.append(synth3).send(context.destination);
 
-// 	//oneArray is the automata array for note choice,
-// 	//twoArray determines whether note velocity is random or really quiet
-// 	newState(oneArray);
-// 	newState(twoArray);
+// var rec;
 
-// 	for (var i = 0; i < oneArray.length; i++)
-// 	{
-// 		if (oneArray[i] == 1)
-// 		{
-// 			var velocity;
+// function initRecord()
+// {
+// 	//var scriptNode = context.listener.createScriptProcessor(4096, 1, 1);
+// 	rec = new Recorder( context );
+// }
 
-// 			if (twoArray[i] = 1)
-// 			{
-// 				velocity = Math.random() * 30 + 10;
-// 			}
+// function startRecording()
+// {
+// 	rec.record();
+// }
 
-// 			if (twoArray[i] == 0)
-// 			{
-// 				velocity = 0;
-// 			}
+// function stopRecording()
+// {
+// 	rec.stop();
 
-// 			if (chordOn)
-// 			{
-// 				synth.noteOn(150 + pitchSetFunc(i, pitchSet), velocity);		
-// 			}
-// 		}
-// 	}
+// 	createDownloadLink();
+// }
 
-// }).on("ended", function() {
-//     this.stop();
-// }).set({buddies:synth}).start();
+// function createDownloadLink(blob) {
 
+// 	var url = URL.createObjectURL(blob);
+// 	var li = document.createElement('li');
+// 	var hf = document.createElement('a');
 
-// var melodyIteration = 0;
+// 	hf.href = url;
+// 	hf.download = new Date().toISOString() + '.wav';
+// 	hf.innerHTML = hf.download;
+// 	li.appendChild(hf);
 
-// //melody L8
-// var melody = T("interval", {interval:"L8", delay:100, timeout:"600sec"}, function() {
+// 	document.getElementById('downloadLink').appendChild(li);
+// 	document.getElementById('downloadLink').appendChild(hf);
 
+// 	console.log(hf);
 
-// 	//threeArray determines whehter the melodyPattern index gets played or not
-// 	//all these arrays follow the automata algorithm and get changed
-// 	newState(threeArray);
-
-// 	if (melodyIteration > melodyPattern.length)
-// 	{
-// 		melodyIteration = 0;
-
-// 		newState(melodyPattern);
-// 	}
-
-// 	melodyIteration++;
-
-// 	for (var i = 0; i < threeArray.length; i++)
-// 	{
-
-// 		if (threeArray[i] == 1)
-// 		{
-// 			if (melodyPattern[melodyIteration] == 1)
-// 			{
-// 				if (melodyOn)
-// 				{
-// 					synth2.noteOn(74 + pitchSetFunc(i, pitchSet), 5 + Math.random() * 20);
-
-// 					// console.log("yo");
-// 					return;
-// 				}
-
-				
-				
-// 			}
-			
-// 		}
-// 	}
-// }).on("ended", function() {
-//     this.stop();
-// }).set({buddies:synth2}).start();
-
-
-// //bass
-// var bass = T("interval", {interval:"L8", timeout:"600sec"}, function() {
-
-// 	//pitch is just random note from the set pitch class
-// 	//velocity is random as well
-
-// 	var loudness = 0;
-
-// 	for (var i = 0; i < twoArray.length; i++)
-// 	{
-// 		loudness += twoArray[i];
-// 	}
-
-// 	if (loudness > x/100)
-// 	{
-// 		loudness = 120;
-// 	}
-
-// 	else
-// 	{
-// 		loudness = 0;
-// 		synth3.allNoteOff();
-// 	}
-
-// 	if (bassOn)
-// 	{
-// 	 	//synth.noteOn(pitchSetFunc(Math.floor(Math.random() * 12), pitchSet) + 38, Math.random() * 90);
-// 		//synth3.noteOn( Math.floor(Math.random() * 2) * 12 + 30 , loudness);
-// 		synth3.noteOn( twoArray[4] * 12 + 30 , loudness);
-
-// 	}
-// }).on("ended", function() {
-//     this.stop();
-// }).set({buddies:synth3}).start();
-
+// }
 
 
 

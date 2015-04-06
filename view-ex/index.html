@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    <title>AngularJS Routing example</title>
+
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+		body {
+		  padding-top: 10px;
+		  background-color: #F5F5F5;
+		}
+
+    </style>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body ng-app="sampleApp">
+
+    <div class="container">
+		<div class="row">
+
+		<div class="col-md-9">
+
+		<table class="table table-striped">
+			<thead>
+			  <tr>
+				<th>#</th><th>Order No.</th><th>Details</th><th></th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<td>1</td><td>1234</td><td>15" Samsung Laptop</td>
+				<td><a href="#ShowOrder/1234">show details</a></td>
+			  </tr>
+			  <tr>
+				<td>2</td><td>5412</td><td>2TB Seagate Hard drive</td>
+				<td><a href="#ShowOrder/5412">show details</a></td>
+			  </tr>
+			  <tr>
+				<td>3</td><td>9874</td><td>D-link router</td>
+				<td><a href="#ShowOrder/9874">show details</a></td>
+			  </tr>
+			</tbody>
+		  </table>
+
+
+		  	<div ng-view></div>
+
+
+		</div>
+
+    </div><!-- /.container -->
+
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+	<script src="app.js"></script>
+
+  </body>
+</html>

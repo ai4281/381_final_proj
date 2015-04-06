@@ -58,15 +58,15 @@ rtclient.REALTIME_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
 
 
 /**
- * Parses the hash parameters to this page and returns them as an object.
+ * Parses the query parameters to this page and returns them as an object.
  * @function
  */
 rtclient.getParams = function() {
   var params = {};
-  var hashFragment = window.location.hash;
-  if (hashFragment) {
+  var queryString = window.location.search;
+  if (queryString) {
     // split up the query string and store in an object
-    var paramStrs = hashFragment.slice(1).split("&");
+    var paramStrs = queryString.slice(1).split("&");
     for (var i = 0; i < paramStrs.length; i++) {
       var paramStr = paramStrs[i].split("=");
       params[paramStr[0]] = unescape(paramStr[1]);
@@ -105,7 +105,7 @@ rtclient.getOption = function(options, key, defaultValue) {
  * @constructor
  * @param options {Object} for authorizer. Two keys are required as mandatory, these are:
  *
- *    1. "clientId", the Client ID from the console
+ *    1. "clientId", the Client ID from the APIs Console
  */
 rtclient.Authorizer = function(options) {
   this.clientId = rtclient.getOption(options, 'clientId');
@@ -196,14 +196,13 @@ rtclient.Authorizer.prototype.fetchUserId = function(callback) {
 /**
  * Creates a new Realtime file.
  * @param title {string} title of the newly created file.
- * @param mimeType {string} the MIME type of the new file.
  * @param callback {Function} the callback to call after creation.
  */
-rtclient.createRealtimeFile = function(title, mimeType, callback) {
+rtclient.createRealtimeFile = function(title, callback) {
   gapi.client.load('drive', 'v2', function() {
     gapi.client.drive.files.insert({
       'resource': {
-        mimeType: mimeType,
+        mimeType: rtclient.REALTIME_MIMETYPE,
         title: title
       }
     }).execute(callback);
@@ -223,7 +222,7 @@ rtclient.createRealtimeFile = function(title, mimeType, callback) {
 rtclient.getFileMetadata = function(fileId, callback) {
   gapi.client.load('drive', 'v2', function() {
     gapi.client.drive.files.get({
-      'fileId' : fileId
+      'fileId' : id
     }).execute(callback);
   });
 }
@@ -246,14 +245,32 @@ rtclient.parseState = function(stateParam) {
 
 
 /**
+ * Redirects the browser back to the current page with an appropriate file ID.
+ * @param fileId {string} the file ID to redirect to.
+ * @param userId {string} the user ID to redirect to.
+ */
+rtclient.redirectTo = function(fileId, userId) {
+  var params = [];
+  if (fileId) {
+    params.push('fileId=' + fileId);
+  }
+  if (userId) {
+    params.push('userId=' + userId);
+  }
+  // Naive URL construction.
+  window.location.href = params.length == 0 ? '/' : ('?' + params.join('&'));
+}
+
+
+/**
  * Handles authorizing, parsing query parameters, loading and creating Realtime
  * documents.
  * @constructor
  * @param options {Object} options for loader. Four keys are required as mandatory, these are:
  *
- *    1. "clientId", the Client ID from the console
- *    2. "initializeModel", the callback to call when the model is first created.
- *    3. "onFileLoaded", the callback to call when the file is loaded.
+ *    1. "clientId", the Client ID from the APIs Console
+ *    2. "initializeModel", the callback to call when the file is loaded.
+ *    3. "onFileLoaded", the callback to call when the model is first created.
  *
  * and one key is optional:
  *
@@ -262,10 +279,8 @@ rtclient.parseState = function(stateParam) {
 rtclient.RealtimeLoader = function(options) {
   // Initialize configuration variables.
   this.onFileLoaded = rtclient.getOption(options, 'onFileLoaded');
-  this.newFileMimeType = rtclient.getOption(options, 'newFileMimeType', rtclient.REALTIME_MIMETYPE);
   this.initializeModel = rtclient.getOption(options, 'initializeModel');
-  this.registerTypes = rtclient.getOption(options, 'registerTypes', function(){});
-  this.afterAuth = rtclient.getOption(options, 'afterAuth', function(){})
+  this.registerTypes = rtclient.getOption(options, 'registerTypes', function(){})
   this.autoCreate = rtclient.getOption(options, 'autoCreate', false); // This tells us if need to we automatically create a file after auth.
   this.defaultTitle = rtclient.getOption(options, 'defaultTitle', 'New Realtime File');
   this.authorizer = new rtclient.Authorizer(options);
@@ -273,47 +288,18 @@ rtclient.RealtimeLoader = function(options) {
 
 
 /**
- * Redirects the browser back to the current page with an appropriate file ID.
- * @param fileIds {Array.} the IDs of the files to open.
- * @param userId {string} the ID of the user.
- */
-rtclient.RealtimeLoader.prototype.redirectTo = function(fileIds, userId) {
-  var params = [];
-  if (fileIds) {
-    params.push('fileIds=' + fileIds.join(','));
-  }
-  if (userId) {
-    params.push('userId=' + userId);
-  }
-
-  // Naive URL construction.
-  var newUrl = params.length == 0 ? './' : ('./#' + params.join('&'));
-  // Using HTML URL re-write if available.
-  if (window.history && window.history.replaceState) {
-    window.history.replaceState("Google Drive Realtime API Playground", "Google Drive Realtime API Playground", newUrl);
-  } else {
-    window.location.href = newUrl;
-  }
-  // We are still here that means the page didn't reload.
-  rtclient.params = rtclient.getParams();
-  for (var index in fileIds) {
-    gapi.drive.realtime.load(fileIds[index], this.onFileLoaded, this.initializeModel, this.handleErrors);
-  }
-}
-
-
-/**
  * Starts the loader by authorizing.
+ * @param callback {Function} afterAuth callback called after authorization.
  */
-rtclient.RealtimeLoader.prototype.start = function() {
+rtclient.RealtimeLoader.prototype.start = function(afterAuth) {
   // Bind to local context to make them suitable for callbacks.
   var _this = this;
   this.authorizer.start(function() {
     if (_this.registerTypes) {
       _this.registerTypes();
     }
-    if (_this.afterAuth) {
-      _this.afterAuth();
+    if (afterAuth) {
+      afterAuth();
     }
     _this.load();
   });
@@ -321,42 +307,32 @@ rtclient.RealtimeLoader.prototype.start = function() {
 
 
 /**
- * Handles errors thrown by the Realtime API.
- */
-rtclient.RealtimeLoader.prototype.handleErrors = function(e) {
-  if(e.type == gapi.drive.realtime.ErrorType.TOKEN_REFRESH_REQUIRED) {
-    authorizer.authorize();
-  } else if(e.type == gapi.drive.realtime.ErrorType.CLIENT_ERROR) {
-    alert("An Error happened: " + e.message);
-    window.location.href= "/";
-  } else if(e.type == gapi.drive.realtime.ErrorType.NOT_FOUND) {
-    alert("The file was not found. It does not exist or you do not have read access to the file.");
-    window.location.href= "/";
-  }
-};
-
-
-/**
  * Loads or creates a Realtime file depending on the fileId and state query
  * parameters.
  */
 rtclient.RealtimeLoader.prototype.load = function() {
-  var fileIds = rtclient.params['fileIds'];
-  if (fileIds) {
-    fileIds = fileIds.split(',');
-  }
+  var fileId = rtclient.params['fileId'];
   var userId = this.authorizer.userId;
   var state = rtclient.params['state'];
 
   // Creating the error callback.
   var authorizer = this.authorizer;
-
-
-  // We have file IDs in the query parameters, so we will use them to load a file.
-  if (fileIds) {
-    for (var index in fileIds) {
-      gapi.drive.realtime.load(fileIds[index], this.onFileLoaded, this.initializeModel, this.handleErrors);
+  var handleErrors = function(e) {
+    if(e.type == gapi.drive.realtime.ErrorType.TOKEN_REFRESH_REQUIRED) {
+      authorizer.authorize();
+    } else if(e.type == gapi.drive.realtime.ErrorType.CLIENT_ERROR) {
+      alert("An Error happened: " + e.message);
+      window.location.href= "/";
+    } else if(e.type == gapi.drive.realtime.ErrorType.NOT_FOUND) {
+      alert("The file was not found. It does not exist or you do not have read access to the file.");
+      window.location.href= "/";
     }
+  };
+
+
+  // We have a file ID in the query parameters, so we will use it to load a file.
+  if (fileId) {
+    gapi.drive.realtime.load(fileId, this.onFileLoaded, this.initializeModel, handleErrors);
     return;
   }
 
@@ -366,9 +342,9 @@ rtclient.RealtimeLoader.prototype.load = function() {
     var stateObj = rtclient.parseState(state);
     // If opening a file from Drive.
     if (stateObj.action == "open") {
-      fileIds = stateObj.ids;
+      fileId = stateObj.ids[0];
       userId = stateObj.userId;
-      this.redirectTo(fileIds, userId);
+      rtclient.redirectTo(fileId, userId);
       return;
     }
   }
@@ -383,12 +359,12 @@ rtclient.RealtimeLoader.prototype.load = function() {
  * Creates a new file and redirects to the URL to load it.
  */
 rtclient.RealtimeLoader.prototype.createNewFileAndRedirect = function() {
-  // No fileId or state have been passed. We create a new Realtime file and
+  //No fileId or state have been passed. We create a new Realtime file and
   // redirect to it.
   var _this = this;
-  rtclient.createRealtimeFile(this.defaultTitle, this.newFileMimeType, function(file) {
+  rtclient.createRealtimeFile(this.defaultTitle, function(file) {
     if (file.id) {
-      _this.redirectTo([file.id], _this.authorizer.userId);
+      rtclient.redirectTo(file.id, _this.authorizer.userId);
     }
     // File failed to be created, log why and do not attempt to redirect.
     else {
